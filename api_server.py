@@ -60,6 +60,7 @@ def create_member():
         print("Oops! An exception has occured:")
         print("Exception TYPE:")
 
+    connection_to_docker_postgres.commit()
     cursor.close()
 
     return jsonify({'name': test}), 201
@@ -86,6 +87,7 @@ def update_member():
     #SQL query to actually update in the database based on the id as a key
 
     cursor.execute("Update quarantine_party_list SET name = %s, hometown = %s WHERE id = %s",(new_name, new_hometown,key_id))
+    connection_to_docker_postgres.commit()
 
     cursor.close()
     return jsonify({'updated name': new_name}), 201
@@ -97,7 +99,7 @@ def delete_member(key):
 
 
     cursor.execute("DELETE FROM quarantine_party_list WHERE id = %s", (key))
-    record = cursor.fetchone()
+    connection_to_docker_postgres.commit()
 
     cursor.close()
 
