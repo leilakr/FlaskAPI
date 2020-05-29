@@ -1,0 +1,27 @@
+version: '3.6'
+
+services:
+  db:
+      image: postgres
+      volumes:
+        - db-data:/var/lib/postgresql/data
+      ports:
+        - 5430:5432
+      restart: always
+      environment:
+        POSTGRES_PASSWORD: password
+
+  api:
+      image: leilakr/flask_api
+      ports:
+        - 8000:8000
+      restart: always
+      environment:
+        DB_HOST: db
+        DB_NAME: postgres
+        DB_USER: postgres
+        DB_PASS: password
+        DB_PORT: 5432
+volumes:
+  db-data:
+    driver: local

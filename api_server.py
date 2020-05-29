@@ -1,14 +1,19 @@
 import flask
 from flask import request, jsonify
 import psycopg2
+import os
 
-connection_to_docker_postgres = psycopg2.connect(host="localhost",database="Friends", user="postgres", password="password",port = 5405)
+connection_to_docker_postgres = psycopg2.connect(host=os.environ.get('DB_HOST', 'localhost'), database=os.environ.get('DB_NAME', 'Friends'), user=os.environ.get('DB_USER','postgres'), password=os.environ.get('DB_PASS','password'), port = os.environ.get('DB_PORT', 5405))
 
+#code needs to read the connection information from the environment variable, not just default from my local computer ON FLASK
+#figure out flask and python how to consume environment variables. No more local host
+#make all the strings dynamic, this will make your code portable
+#run docker image with preset environment variables, pass from local code to portable code
 
 #Creates Flask app object and starts the debugger so we can know what goes wrong.
 app = flask.Flask(__name__)
-app.config["DEBUG"] = True
 
+app.secret_key ='1234'
 
 @app.route('/', methods=['GET'])
 def home():
@@ -60,9 +65,10 @@ def create_member():
         print("Oops! An exception has occured:")
         print("Exception TYPE:")
 
+    connection_to_docker_postgres.commit()
     cursor.close()
 
-    return jsonify({'name': test}), 201
+    return jsonify({'name':new_name}), 201
 
 # Updates an existing user entry
 @app.route('/api/v1/resources/quarantine_party_list/update', methods=['PUT'])
@@ -86,6 +92,7 @@ def update_member():
     #SQL query to actually update in the database based on the id as a key
 
     cursor.execute("Update quarantine_party_list SET name = %s, hometown = %s WHERE id = %s",(new_name, new_hometown,key_id))
+    connection_to_docker_postgres.commit()
 
     cursor.close()
     return jsonify({'updated name': new_name}), 201
@@ -97,9 +104,10 @@ def delete_member(key):
 
 
     cursor.execute("DELETE FROM quarantine_party_list WHERE id = %s", (key))
-    record = cursor.fetchone()
+    connection_to_docker_postgres.commit()
 
     cursor.close()
 
-    return jsonify({'name': test}), 201
-app.run()
+    return jsonify({'name': key}), 201
+if __name__ == '__main__':
+    app.run(debug=True, host="0.0.0.0", port=8000 )
